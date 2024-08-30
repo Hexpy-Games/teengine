@@ -1,0 +1,12 @@
+[package]
+name = "teengine"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+glutin = "0.29.1"
+gl = "0.14.0"
+glam = "0.22.0"  # 벡터 및 행렬 연산을 위한 수학 라이브러리
+image = "0.24.5"  # 이미지 로딩 및 처리를 위한 라이브러리
