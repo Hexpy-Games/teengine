@@ -1,25 +1,29 @@
+use glam::{Mat4, Vec2};
 use glutin::event::{Event, WindowEvent};
 use glutin::event_loop::{ControlFlow, EventLoop};
 use glutin::window::WindowBuilder;
-use glutin::{ContextBuilder, PossiblyCurrent, WindowedContext};
-use glam::{Mat4, Vec3};
-use std::time::{Instant, Duration};
-use glutin::dpi::PhysicalSize;
+use glutin::ContextBuilder;
+use std::time::{Duration, Instant};
 
 mod shaders;
 
 struct Renderer {
     program: gl::types::GLuint,
     vao: gl::types::GLuint,
-    vbo: gl::types::GLuint,
+    _vbo: gl::types::GLuint,
     start_time: Instant,
     last_update: Instant,
+    position: Vec2,
+    scale: Vec2,
+    rotation: f32,
 }
 
 impl Renderer {
     fn new() -> Self {
-        let vertex_shader = shaders::compile_shader(gl::VERTEX_SHADER, shaders::VERTEX_SHADER_SOURCE);
-        let fragment_shader = shaders::compile_shader(gl::FRAGMENT_SHADER, shaders::FRAGMENT_SHADER_SOURCE);
+        let vertex_shader =
+            shaders::compile_shader(gl::VERTEX_SHADER, shaders::VERTEX_SHADER_SOURCE);
+        let fragment_shader =
+            shaders::compile_shader(gl::FRAGMENT_SHADER, shaders::FRAGMENT_SHADER_SOURCE);
         let program = shaders::link_program(vertex_shader, fragment_shader);
 
         let mut vao = 0;
@@ -34,9 +38,9 @@ impl Renderer {
 
             let vertices: [f32; 15] = [
                 // positions    // colors
-                0.5, -0.5,     1.0, 0.0, 0.0,   // bottom right
-                -0.5, -0.5,    0.0, 1.0, 0.0,   // bottom left
-                0.0,  0.5,     0.0, 0.0, 1.0    // top
+                0.5, -0.5, 1.0, 0.0, 0.0, // bottom right
+                -0.5, -0.5, 0.0, 1.0, 0.0, // bottom left
+                0.0, 0.5, 0.0, 0.0, 1.0, // top
             ];
 
             gl::BufferData(
@@ -46,22 +50,50 @@ impl Renderer {
                 gl::STATIC_DRAW,
             );
 
-            gl::VertexAttribPointer(0, 2, gl::FLOAT, gl::FALSE, 5 * std::mem::size_of::<f32>() as gl::types::GLsizei, std::ptr::null());
+            gl::VertexAttribPointer(
+                0,
+                2,
+                gl::FLOAT,
+                gl::FALSE,
+                5 * std::mem::size_of::<f32>() as gl::types::GLsizei,
+                std::ptr::null(),
+            );
             gl::EnableVertexAttribArray(0);
 
-            gl::VertexAttribPointer(1, 3, gl::FLOAT, gl::FALSE, 5 * std::mem::size_of::<f32>() as gl::types::GLsizei, (2 * std::mem::size_of::<f32>()) as *const () as *const _);
+            gl::VertexAttribPointer(
+                1,
+                3,
+                gl::FLOAT,
+                gl::FALSE,
+                5 * std::mem::size_of::<f32>() as gl::types::GLsizei,
+                (2 * std::mem::size_of::<f32>()) as *const () as *const _,
+            );
             gl::EnableVertexAttribArray(1);
         }
 
         let now = Instant::now();
 
-        Self { program, vao, vbo, start_time: now, last_update: now }
+        Self {
+            program,
+            vao,
+            _vbo: vbo,
+            start_time: now,
+            last_update: now,
+            position: Vec2::ZERO,
+            scale: Vec2::ONE,
+            rotation: 0.0,
+        }
     }
 
     fn update(&mut self) {
         let now = Instant::now();
-        let dt = now - self.last_update;
         self.last_update = now;
+
+        self.position.x = (self.start_time.elapsed().as_secs_f32() * 0.5).sin() * 0.5;
+        self.position.y = (self.start_time.elapsed().as_secs_f32() * 0.3).cos() * 0.5;
+        self.scale =
+            Vec2::splat((self.start_time.elapsed().as_secs_f32() * 0.5).sin() * 0.25 + 0.75);
+        self.rotation = self.start_time.elapsed().as_secs_f32();
     }
 
     fn render(&self) {
@@ -71,10 +103,19 @@ impl Renderer {
 
             gl::UseProgram(self.program);
 
-            let elapsed = self.start_time.elapsed().as_secs_f32();
-            let transform = Mat4::from_rotation_z(elapsed);
-            let transform_loc = gl::GetUniformLocation(self.program, b"transform\0".as_ptr() as *const _);
-            gl::UniformMatrix4fv(transform_loc, 1, gl::FALSE, transform.to_cols_array().as_ptr());
+            let translation = Mat4::from_translation(self.position.extend(0.0));
+            let rotation = Mat4::from_rotation_z(self.rotation);
+            let scale = Mat4::from_scale(self.scale.extend(1.0));
+            let transform = translation * rotation * scale;
+
+            let transform_loc =
+                gl::GetUniformLocation(self.program, b"transform\0".as_ptr() as *const _);
+            gl::UniformMatrix4fv(
+                transform_loc,
+                1,
+                gl::FALSE,
+                transform.to_cols_array().as_ptr(),
+            );
 
             gl::BindVertexArray(self.vao);
             gl::DrawArrays(gl::TRIANGLES, 0, 3);
