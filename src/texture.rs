@@ -2,6 +2,7 @@ use gl::types::*;
 use image::GenericImageView;
 use std::path::Path;
 
+#[derive(Debug, Clone)]
 pub struct Texture {
     id: GLuint,
     width: u32,

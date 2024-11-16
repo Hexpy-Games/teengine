@@ -25,6 +25,8 @@ impl SpriteRenderer {
             gl::GenBuffers(1, &mut vbo);
 
             gl::BindVertexArray(vao);
+
+            // Create and bind VBO
             gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
 
             // 버텍스 데이터 구조 변경 (위치와 텍스처 좌표)
@@ -56,6 +58,10 @@ impl SpriteRenderer {
                 (2 * std::mem::size_of::<f32>()) as *const () as *const _,
             );
             gl::EnableVertexAttribArray(1);
+
+            // Unbind
+            gl::BindBuffer(gl::ARRAY_BUFFER, 0);
+            gl::BindVertexArray(0);
         }
 
         Self { program, vao, vbo }
@@ -85,6 +91,24 @@ impl SpriteRenderer {
                 projection.to_cols_array().as_ptr(),
             );
 
+            let use_color_key_loc = gl::GetUniformLocation(self.program, b"useColorKey\0".as_ptr() as *const _);
+            
+            if let Some(color_key) = &sprite.color_key {
+                let color_key_loc = gl::GetUniformLocation(self.program, b"colorKey\0".as_ptr() as *const _);
+                let threshold_loc = gl::GetUniformLocation(self.program, b"threshold\0".as_ptr() as *const _);
+
+                gl::Uniform1i(use_color_key_loc, 1);
+                gl::Uniform3f(
+                    color_key_loc, 
+                    color_key.color.x, 
+                    color_key.color.y, 
+                    color_key.color.z);
+                gl::Uniform1f(threshold_loc, color_key.threshold);
+            } else {
+                gl::Uniform1i(use_color_key_loc, 0);
+            }
+
+            gl::ActiveTexture(gl::TEXTURE0);
             sprite.texture.bind();
 
             // 버텍스 데이터 업데이트

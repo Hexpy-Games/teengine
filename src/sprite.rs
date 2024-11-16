@@ -1,7 +1,8 @@
 use crate::texture::Texture;
+use crate::utils::color_key_util::ColorKey;
 use glam::Vec2;
 
-#[derive(Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Rect {
     pub width: f32,
     pub height: f32,
@@ -13,11 +14,13 @@ impl Rect {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Sprite {
     pub texture: Texture,
     pub position: Vec2,
     pub rotation: f32,
     pub tex_coords: [Vec2; 4],
+    pub color_key: Option<ColorKey>,
     pixel_scale: f32,
     current_frame: usize,
     frames_per_row: usize,      // 한 행의 프레임 수
@@ -34,10 +37,17 @@ impl Sprite {
         sprite_size: Rect,
         sheet_size: Rect,
         pixel_scale: f32,
+        color_key: Option<&str>,
     ) -> Self {
         let frames_per_row = (sheet_size.width / sprite_size.width) as usize;
         let frames_per_column = (sheet_size.height / sprite_size.height) as usize;
         
+        let color_key = if let Some(hex) = color_key {
+            Some(ColorKey::from_hex(hex, 0.01).unwrap())
+        } else {
+            None
+        };
+
         Self {
             texture,
             position,
@@ -49,6 +59,18 @@ impl Sprite {
             sprite_size,
             sheet_size,
             pixel_scale,
+            color_key,
+        }
+    }
+
+    pub fn set_color_key_hex(&mut self, hex: &str) -> Result<(), String> {
+        self.color_key = Some(ColorKey::from_hex(hex, 0.5)?);
+        Ok(())
+    }
+
+    pub fn set_color_key_threshold(&mut self, threshold: f32) {
+        if let Some(ref mut color_key) = self.color_key {
+            color_key.threshold = threshold;
         }
     }
 

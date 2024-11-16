@@ -3,6 +3,7 @@ use glutin::event::{Event, WindowEvent};
 use glutin::event_loop::{ControlFlow, EventLoop};
 use glutin::window::WindowBuilder;
 use glutin::ContextBuilder;
+use utils::color_key_util::ColorKey;
 use std::path::Path;
 use std::time::{Duration, Instant};
 
@@ -10,6 +11,7 @@ mod shaders;
 mod sprite;
 mod sprite_renderer;
 mod texture;
+mod utils;
 
 use sprite::{Rect, Sprite};
 use sprite_renderer::SpriteRenderer;
@@ -33,7 +35,8 @@ impl Game {
             0.0,
             Rect::new(256.0, 256.0),
             Rect::new(1024.0, 1024.0),
-            10.0,
+            50.0,
+            Some("#C6C6C4"),
         );
         let projection = Mat4::orthographic_rh(0.0, width as f32, height as f32, 0.0, -1.0, 1.0);
 
@@ -57,7 +60,7 @@ impl Game {
 
     fn render(&self) {
         unsafe {
-            gl::ClearColor(0.2, 0.3, 0.3, 1.0);
+            gl::ClearColor(0.0, 0.0, 0.0, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
         }
 
