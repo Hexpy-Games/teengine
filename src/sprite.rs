@@ -8,30 +8,45 @@ pub struct Sprite {
     pub rotation: f32,
     pub tex_coords: [Vec2; 4],
     pub current_frame: usize,
+    sprite_size: f32,
+    sheet_size: f32,
+    grid_size: usize, // 한 행/열의 스프라이트 개수
 }
 
 impl Sprite {
-    pub fn new(texture: Texture, position: Vec2, scale: Vec2, rotation: f32) -> Self {
+    pub fn new(
+        texture: Texture,
+        position: Vec2,
+        scale: Vec2,
+        rotation: f32,
+        sprite_size: f32,
+        sheet_size: f32,
+        grid_size: usize,
+    ) -> Self {
         Self {
             texture,
             position,
             scale,
             rotation,
-            tex_coords: Self::get_frame_coords(0),
+            tex_coords: Self::get_frame_coords(0, sprite_size, sheet_size, grid_size),
             current_frame: 0,
+            sprite_size,
+            sheet_size,
+            grid_size,
         }
     }
 
-    pub fn get_frame_coords(frame: usize) -> [Vec2; 4] {
-        let sprite_size = 256.0; // 1024 / 4 = 256 (4x4 그리드 가정)
-        let (row, col) = (frame / 4, frame % 4);
+    pub fn get_frame_coords(frame: usize, sprite_size: f32, sheet_size: f32, grid_size: usize) -> [Vec2; 4] {
+        let (row, col) = (frame / grid_size, frame % grid_size);
+        let normalized_sprite_size = sprite_size / sheet_size;
+        
         let (s, t) = (
-            col as f32 * sprite_size / 1024.0,
-            row as f32 * sprite_size / 1024.0,
+            col as f32 * normalized_sprite_size,
+            row as f32 * normalized_sprite_size,
         );
         let (s2, t2) = (
-            (col + 1) as f32 * sprite_size / 1024.0,
-            (row + 1) as f32 * sprite_size / 1024.0,
+            s + normalized_sprite_size,
+            t + normalized_sprite_size,
         );
 
         [
@@ -44,6 +59,6 @@ impl Sprite {
 
     pub fn update_frame(&mut self, frame: usize) {
         self.current_frame = frame;
-        self.tex_coords = Self::get_frame_coords(frame);
+        self.tex_coords = Self::get_frame_coords(frame, self.sprite_size, self.sheet_size, self.grid_size);
     }
 }

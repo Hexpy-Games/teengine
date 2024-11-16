@@ -27,7 +27,15 @@ impl Game {
     fn new(width: u32, height: u32) -> Self {
         let sprite_renderer = SpriteRenderer::new();
         let texture = Texture::new(Path::new("assets/sprite.png")).expect("Failed to load texture");
-        let sprite = Sprite::new(texture, Vec2::new(0.0, 0.0), Vec2::new(100.0, 100.0), 0.0);
+        let sprite = Sprite::new(
+            texture,
+            Vec2::new(0.0, 0.0),
+            Vec2::new(100.0, 100.0),
+            0.0,
+            256.0,
+            1024.0,
+            4, // 4x4 그리드
+        );
         let projection = Mat4::orthographic_rh(0.0, width as f32, height as f32, 0.0, -1.0, 1.0);
 
         Self {
