@@ -11,7 +11,7 @@ mod sprite;
 mod sprite_renderer;
 mod texture;
 
-use sprite::Sprite;
+use sprite::{Rect, Sprite};
 use sprite_renderer::SpriteRenderer;
 use texture::Texture;
 
@@ -30,11 +30,10 @@ impl Game {
         let sprite = Sprite::new(
             texture,
             Vec2::new(0.0, 0.0),
-            Vec2::new(100.0, 100.0),
             0.0,
-            256.0,
-            1024.0,
-            4, // 4x4 그리드
+            Rect::new(256.0, 256.0),
+            Rect::new(1024.0, 1024.0),
+            10.0,
         );
         let projection = Mat4::orthographic_rh(0.0, width as f32, height as f32, 0.0, -1.0, 1.0);
 
@@ -47,10 +46,10 @@ impl Game {
         }
     }
 
-    fn update(&mut self, dt: Duration) {
+    fn update(&mut self) {
         // 프레임 업데이트
         if self.last_frame_change.elapsed() >= self.frame_duration {
-            let next_frame = (self.sprite.current_frame + 1) % 4; // 0~4 프레임 순환
+            let next_frame = (self.sprite.get_current_frame() + 1) % 4; // 0~4 프레임 순환
             self.sprite.update_frame(next_frame);
             self.last_frame_change = Instant::now();
         }
@@ -83,8 +82,6 @@ fn main() {
     let size = window.inner_size();
     let mut game = Game::new(size.width, size.height);
 
-    let mut last_frame = Instant::now();
-
     el.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Poll;
 
@@ -106,11 +103,7 @@ fn main() {
                 _ => (),
             },
             Event::MainEventsCleared => {
-                let now = Instant::now();
-                let dt = now - last_frame;
-                last_frame = now;
-
-                game.update(dt);
+                game.update();
                 windowed_context.window().request_redraw();
             }
             Event::RedrawRequested(_) => {

@@ -1,7 +1,7 @@
 use crate::shaders;
 use crate::sprite::Sprite;
 use gl::types::*;
-use glam::{Mat4, Vec2};
+use glam::{Mat4, Vec3};
 
 pub struct SpriteRenderer {
     program: GLuint,
@@ -65,8 +65,10 @@ impl SpriteRenderer {
         unsafe {
             gl::UseProgram(self.program);
 
+            let frame_dimensions = sprite.get_frame_dimensions();
+
             let model = Mat4::from_scale_rotation_translation(
-                sprite.scale.extend(1.0),
+                Vec3::new(frame_dimensions.x * sprite.get_pixel_scale(), frame_dimensions.y * sprite.get_pixel_scale(), 1.0),
                 glam::Quat::from_rotation_z(sprite.rotation),
                 sprite.position.extend(0.0),
             );
@@ -88,30 +90,12 @@ impl SpriteRenderer {
             // 버텍스 데이터 업데이트
             let vertices: [f32; 24] = [
                 // 위치      // 텍스처 좌표
-                0.0,
-                1.0,
-                sprite.tex_coords[0].x,
-                sprite.tex_coords[0].y,
-                1.0,
-                0.0,
-                sprite.tex_coords[2].x,
-                sprite.tex_coords[2].y,
-                0.0,
-                0.0,
-                sprite.tex_coords[3].x,
-                sprite.tex_coords[3].y,
-                0.0,
-                1.0,
-                sprite.tex_coords[0].x,
-                sprite.tex_coords[0].y,
-                1.0,
-                1.0,
-                sprite.tex_coords[1].x,
-                sprite.tex_coords[1].y,
-                1.0,
-                0.0,
-                sprite.tex_coords[2].x,
-                sprite.tex_coords[2].y,
+                0.0, 1.0, sprite.tex_coords[0].x, sprite.tex_coords[0].y,
+                1.0, 0.0, sprite.tex_coords[2].x, sprite.tex_coords[2].y,
+                0.0, 0.0, sprite.tex_coords[3].x, sprite.tex_coords[3].y,
+                0.0, 1.0, sprite.tex_coords[0].x, sprite.tex_coords[0].y,
+                1.0, 1.0, sprite.tex_coords[1].x, sprite.tex_coords[1].y,
+                1.0, 0.0, sprite.tex_coords[2].x, sprite.tex_coords[2].y,
             ];
 
             gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo);
