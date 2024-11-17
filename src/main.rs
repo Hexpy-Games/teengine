@@ -6,14 +6,11 @@ use glutin::ContextBuilder;
 use std::path::Path;
 use std::time::{Duration, Instant};
 
-mod shaders;
 mod sprite;
-mod sprite_renderer;
 mod texture;
-mod utils;
 
-use sprite::{Rect, Sprite};
-use sprite_renderer::SpriteRenderer;
+use sprite::sprite_renderer::SpriteRenderer;
+use sprite::{sprite::Rect, sprite::Sprite};
 use texture::Texture;
 
 struct Game {

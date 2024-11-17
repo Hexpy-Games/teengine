@@ -1,5 +1,5 @@
+use crate::sprite::utils::color_key_util::ColorKey;
 use crate::texture::Texture;
-use crate::utils::color_key_util::ColorKey;
 use glam::Vec2;
 
 #[derive(Debug, Clone, Copy)]
