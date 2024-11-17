@@ -11,10 +11,14 @@ pub struct SpriteRenderer {
 
 impl SpriteRenderer {
     pub fn new() -> Self {
-        let vertex_shader =
-            shaders::compile_shader(gl::VERTEX_SHADER, shaders::SPRITE_VERTEX_SHADER);
-        let fragment_shader =
-            shaders::compile_shader(gl::FRAGMENT_SHADER, shaders::SPRITE_FRAGMENT_SHADER);
+        let vertex_shader = shaders::compile_shader(
+            gl::VERTEX_SHADER,
+            shaders::SPRITE_VERTEX_SHADER,
+        );
+        let fragment_shader = shaders::compile_shader(
+            gl::FRAGMENT_SHADER,
+            shaders::SPRITE_FRAGMENT_SHADER,
+        );
         let program = shaders::link_program(vertex_shader, fragment_shader);
 
         let mut vao = 0;
@@ -29,7 +33,7 @@ impl SpriteRenderer {
             // Create and bind VBO
             gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
 
-            // 버텍스 데이터 구조 변경 (위치와 텍스처 좌표)
+            // Change vertex data structure (position and texture coordinates)
             gl::BufferData(
                 gl::ARRAY_BUFFER,
                 (24 * std::mem::size_of::<f32>()) as GLsizeiptr,
@@ -37,7 +41,7 @@ impl SpriteRenderer {
                 gl::DYNAMIC_DRAW,
             );
 
-            // 위치 속성
+            // Position attribute
             gl::VertexAttribPointer(
                 0,
                 2,
@@ -48,7 +52,7 @@ impl SpriteRenderer {
             );
             gl::EnableVertexAttribArray(0);
 
-            // 텍스처 좌표 속성
+            // Texture coordinate attribute
             gl::VertexAttribPointer(
                 1,
                 2,
@@ -67,23 +71,41 @@ impl SpriteRenderer {
         Self { program, vao, vbo }
     }
 
-    pub fn draw_sprite(&self, sprite: &Sprite, projection: &Mat4) {
+    pub fn draw_sprite(
+        &self,
+        sprite: &Sprite,
+        projection: &Mat4,
+    ) {
         unsafe {
             gl::UseProgram(self.program);
 
-            let frame_dimensions = sprite.get_frame_dimensions();
+            let scale = Vec3::new(
+                sprite.sprite_size.width * sprite.get_pixel_scale(),
+                sprite.sprite_size.height * sprite.get_pixel_scale(),
+                1.0,
+            );
 
             let model = Mat4::from_scale_rotation_translation(
-                Vec3::new(frame_dimensions.x * sprite.get_pixel_scale(), frame_dimensions.y * sprite.get_pixel_scale(), 1.0),
+                scale,
                 glam::Quat::from_rotation_z(sprite.rotation),
                 sprite.position.extend(0.0),
             );
 
-            let model_loc = gl::GetUniformLocation(self.program, b"model\0".as_ptr() as *const _);
-            gl::UniformMatrix4fv(model_loc, 1, gl::FALSE, model.to_cols_array().as_ptr());
+            let model_loc = gl::GetUniformLocation(
+                self.program,
+                b"model\0".as_ptr() as *const _,
+            );
+            gl::UniformMatrix4fv(
+                model_loc,
+                1,
+                gl::FALSE,
+                model.to_cols_array().as_ptr(),
+            );
 
-            let projection_loc =
-                gl::GetUniformLocation(self.program, b"projection\0".as_ptr() as *const _);
+            let projection_loc = gl::GetUniformLocation(
+                self.program,
+                b"projection\0".as_ptr() as *const _,
+            );
             gl::UniformMatrix4fv(
                 projection_loc,
                 1,
@@ -91,18 +113,28 @@ impl SpriteRenderer {
                 projection.to_cols_array().as_ptr(),
             );
 
-            let use_color_key_loc = gl::GetUniformLocation(self.program, b"useColorKey\0".as_ptr() as *const _);
-            
+            let use_color_key_loc = gl::GetUniformLocation(
+                self.program,
+                b"useColorKey\0".as_ptr() as *const _,
+            );
+
             if let Some(color_key) = &sprite.color_key {
-                let color_key_loc = gl::GetUniformLocation(self.program, b"colorKey\0".as_ptr() as *const _);
-                let threshold_loc = gl::GetUniformLocation(self.program, b"threshold\0".as_ptr() as *const _);
+                let color_key_loc = gl::GetUniformLocation(
+                    self.program,
+                    b"colorKey\0".as_ptr() as *const _,
+                );
+                let threshold_loc = gl::GetUniformLocation(
+                    self.program,
+                    b"threshold\0".as_ptr() as *const _,
+                );
 
                 gl::Uniform1i(use_color_key_loc, 1);
                 gl::Uniform3f(
-                    color_key_loc, 
-                    color_key.color.x, 
-                    color_key.color.y, 
-                    color_key.color.z);
+                    color_key_loc,
+                    color_key.color.x,
+                    color_key.color.y,
+                    color_key.color.z,
+                );
                 gl::Uniform1f(threshold_loc, color_key.threshold);
             } else {
                 gl::Uniform1i(use_color_key_loc, 0);
@@ -111,15 +143,34 @@ impl SpriteRenderer {
             gl::ActiveTexture(gl::TEXTURE0);
             sprite.texture.bind();
 
-            // 버텍스 데이터 업데이트
+            // Update vertex data
             let vertices: [f32; 24] = [
-                // 위치      // 텍스처 좌표
-                0.0, 1.0, sprite.tex_coords[0].x, sprite.tex_coords[0].y,
-                1.0, 0.0, sprite.tex_coords[2].x, sprite.tex_coords[2].y,
-                0.0, 0.0, sprite.tex_coords[3].x, sprite.tex_coords[3].y,
-                0.0, 1.0, sprite.tex_coords[0].x, sprite.tex_coords[0].y,
-                1.0, 1.0, sprite.tex_coords[1].x, sprite.tex_coords[1].y,
-                1.0, 0.0, sprite.tex_coords[2].x, sprite.tex_coords[2].y,
+                // Pos
+                // Texture coordinate
+                0.0,
+                1.0,
+                sprite.tex_coords[0].x,
+                sprite.tex_coords[0].y,
+                1.0,
+                0.0,
+                sprite.tex_coords[2].x,
+                sprite.tex_coords[2].y,
+                0.0,
+                0.0,
+                sprite.tex_coords[3].x,
+                sprite.tex_coords[3].y,
+                0.0,
+                1.0,
+                sprite.tex_coords[0].x,
+                sprite.tex_coords[0].y,
+                1.0,
+                1.0,
+                sprite.tex_coords[1].x,
+                sprite.tex_coords[1].y,
+                1.0,
+                0.0,
+                sprite.tex_coords[2].x,
+                sprite.tex_coords[2].y,
             ];
 
             gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo);

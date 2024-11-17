@@ -3,7 +3,6 @@ use glutin::event::{Event, WindowEvent};
 use glutin::event_loop::{ControlFlow, EventLoop};
 use glutin::window::WindowBuilder;
 use glutin::ContextBuilder;
-use utils::color_key_util::ColorKey;
 use std::path::Path;
 use std::time::{Duration, Instant};
 
@@ -26,19 +25,30 @@ struct Game {
 }
 
 impl Game {
-    fn new(width: u32, height: u32) -> Self {
+    fn new(
+        width: u32,
+        height: u32,
+    ) -> Self {
         let sprite_renderer = SpriteRenderer::new();
-        let texture = Texture::new(Path::new("assets/sprite.png")).expect("Failed to load texture");
+        let texture = Texture::new(Path::new("assets/sprite.png"))
+            .expect("Failed to load texture");
         let sprite = Sprite::new(
             texture,
             Vec2::new(0.0, 0.0),
             0.0,
             Rect::new(256.0, 256.0),
             Rect::new(1024.0, 1024.0),
-            50.0,
+            0.25,
             Some("#C6C6C4"),
         );
-        let projection = Mat4::orthographic_rh(0.0, width as f32, height as f32, 0.0, -1.0, 1.0);
+        let projection = Mat4::orthographic_rh(
+            0.0,
+            width as f32,
+            height as f32,
+            0.0,
+            -1.0,
+            1.0,
+        );
 
         Self {
             sprite_renderer,
@@ -50,7 +60,7 @@ impl Game {
     }
 
     fn update(&mut self) {
-        // 프레임 업데이트
+        // Update frame
         if self.last_frame_change.elapsed() >= self.frame_duration {
             let next_frame = (self.sprite.get_current_frame() + 1) % 4; // 0~4 프레임 순환
             self.sprite.update_frame(next_frame);
@@ -79,7 +89,9 @@ fn main() {
 
     let windowed_context = unsafe { windowed_context.make_current().unwrap() };
 
-    gl::load_with(|symbol| windowed_context.get_proc_address(symbol) as *const _);
+    gl::load_with(|symbol| {
+        windowed_context.get_proc_address(symbol) as *const _
+    });
 
     let window = windowed_context.window();
     let size = window.inner_size();
@@ -91,7 +103,9 @@ fn main() {
         match event {
             Event::LoopDestroyed => return,
             Event::WindowEvent { event, .. } => match event {
-                WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
+                WindowEvent::CloseRequested => {
+                    *control_flow = ControlFlow::Exit
+                }
                 WindowEvent::Resized(physical_size) => {
                     windowed_context.resize(physical_size);
                     game.projection = Mat4::orthographic_rh(

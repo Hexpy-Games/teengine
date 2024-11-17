@@ -1,7 +1,10 @@
 use gl::types::*;
 use std::ffi::CString;
 
-pub fn compile_shader(shader_type: GLenum, source: &str) -> GLuint {
+pub fn compile_shader(
+    shader_type: GLenum,
+    source: &str,
+) -> GLuint {
     unsafe {
         let shader = gl::CreateShader(shader_type);
         let c_str = CString::new(source.as_bytes()).unwrap();
@@ -13,7 +16,12 @@ pub fn compile_shader(shader_type: GLenum, source: &str) -> GLuint {
         if success != gl::TRUE as GLint {
             let mut info_log = Vec::with_capacity(512);
             let mut len = 0;
-            gl::GetShaderInfoLog(shader, 512, &mut len, info_log.as_mut_ptr() as *mut GLchar);
+            gl::GetShaderInfoLog(
+                shader,
+                512,
+                &mut len,
+                info_log.as_mut_ptr() as *mut GLchar,
+            );
             info_log.set_len(len as usize);
             panic!(
                 "Shader compilation failed: {}",
@@ -24,7 +32,10 @@ pub fn compile_shader(shader_type: GLenum, source: &str) -> GLuint {
     }
 }
 
-pub fn link_program(vertex_shader: GLuint, fragment_shader: GLuint) -> GLuint {
+pub fn link_program(
+    vertex_shader: GLuint,
+    fragment_shader: GLuint,
+) -> GLuint {
     unsafe {
         let program = gl::CreateProgram();
         gl::AttachShader(program, vertex_shader);
@@ -36,7 +47,12 @@ pub fn link_program(vertex_shader: GLuint, fragment_shader: GLuint) -> GLuint {
         if success != gl::TRUE as GLint {
             let mut info_log = Vec::with_capacity(512);
             let mut len = 0;
-            gl::GetProgramInfoLog(program, 512, &mut len, info_log.as_mut_ptr() as *mut GLchar);
+            gl::GetProgramInfoLog(
+                program,
+                512,
+                &mut len,
+                info_log.as_mut_ptr() as *mut GLchar,
+            );
             info_log.set_len(len as usize);
             panic!(
                 "Program linking failed: {}",
