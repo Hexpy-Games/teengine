@@ -1,14 +1,16 @@
 use glam::{Mat4, Vec2};
-use glutin::event::{Event, WindowEvent};
+use glutin::event::{ElementState, Event, KeyboardInput, WindowEvent};
 use glutin::event_loop::{ControlFlow, EventLoop};
 use glutin::window::WindowBuilder;
 use glutin::ContextBuilder;
 use std::path::Path;
 use std::time::{Duration, Instant};
 
+mod input;
 mod sprite;
 mod texture;
 
+use input::input_manager::{InputAction, InputManager};
 use sprite::sprite_renderer::SpriteRenderer;
 use sprite::{sprite::Rect, sprite::Sprite};
 use texture::Texture;
@@ -19,6 +21,7 @@ struct Game {
     projection: Mat4,
     last_frame_change: Instant,
     frame_duration: Duration,
+    input_manager: InputManager,
 }
 
 impl Game {
@@ -35,7 +38,7 @@ impl Game {
             0.0,
             Rect::new(256.0, 256.0),
             Rect::new(1024.0, 1024.0),
-            0.25,
+            0.8,
             Some("#C6C6C4"),
         );
         let projection = Mat4::orthographic_rh(
@@ -46,6 +49,7 @@ impl Game {
             -1.0,
             1.0,
         );
+        let input_manager = InputManager::new();
 
         Self {
             sprite_renderer,
@@ -53,13 +57,31 @@ impl Game {
             projection,
             last_frame_change: Instant::now(),
             frame_duration: Duration::from_millis(120),
+            input_manager,
         }
     }
 
     fn update(&mut self) {
-        // Update frame
+        self.input_manager.update();
+
+        // 입력에 따른 스프라이트 이동 처리
+        let movement_speed = 5.0;
+        if self.input_manager.is_action_active(InputAction::MoveRight) {
+            self.sprite.position.x += movement_speed;
+        }
+        if self.input_manager.is_action_active(InputAction::MoveLeft) {
+            self.sprite.position.x -= movement_speed;
+        }
+        if self.input_manager.is_action_active(InputAction::MoveUp) {
+            self.sprite.position.y -= movement_speed;
+        }
+        if self.input_manager.is_action_active(InputAction::MoveDown) {
+            self.sprite.position.y += movement_speed;
+        }
+
+        // 프레임 업데이트
         if self.last_frame_change.elapsed() >= self.frame_duration {
-            let next_frame = (self.sprite.get_current_frame() + 1) % 4; // 0~4 프레임 순환
+            let next_frame = (self.sprite.get_current_frame() + 1) % 4;
             self.sprite.update_frame(next_frame);
             self.last_frame_change = Instant::now();
         }
@@ -98,21 +120,21 @@ fn main() {
         *control_flow = ControlFlow::Poll;
 
         match event {
-            Event::LoopDestroyed => return,
             Event::WindowEvent { event, .. } => match event {
                 WindowEvent::CloseRequested => {
                     *control_flow = ControlFlow::Exit
                 }
-                WindowEvent::Resized(physical_size) => {
-                    windowed_context.resize(physical_size);
-                    game.projection = Mat4::orthographic_rh(
-                        0.0,
-                        physical_size.width as f32,
-                        physical_size.height as f32,
-                        0.0,
-                        -1.0,
-                        1.0,
-                    );
+                WindowEvent::KeyboardInput {
+                    input:
+                        KeyboardInput {
+                            virtual_keycode: Some(keycode),
+                            state,
+                            ..
+                        },
+                    ..
+                } => {
+                    let pressed = state == ElementState::Pressed;
+                    game.input_manager.process_keyboard_input(keycode, pressed);
                 }
                 _ => (),
             },
