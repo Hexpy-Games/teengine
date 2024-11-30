@@ -1,0 +1,10 @@
+[package]
+name = "teengine-example-game"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+teengine = { path = "../../" }
+glutin = "0.29.1"
+gl = "0.14.0"
+glam = "0.22.0"

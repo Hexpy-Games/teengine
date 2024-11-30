@@ -1,5 +1,5 @@
 use crate::sprite::utils::color_key_util::ColorKey;
-use crate::texture::Texture;
+use crate::texture::texture::Texture;
 use glam::Vec2;
 
 #[derive(Debug, Clone, Copy)]
@@ -27,6 +27,8 @@ pub struct Sprite {
     pub sprite_size: Rect,
     pixel_scale: f32,
     current_frame: usize,
+    frames_per_row: usize,
+    frames_per_column: usize,
     sheet_size: Rect,
 }
 
@@ -40,6 +42,10 @@ impl Sprite {
         pixel_scale: f32,
         color_key: Option<&str>,
     ) -> Self {
+        let frames_per_row = (sheet_size.width / sprite_size.width) as usize;
+        let frames_per_column =
+            (sheet_size.height / sprite_size.height) as usize;
+
         let color_key = if let Some(hex) = color_key {
             Some(ColorKey::from_hex(hex, 0.01).unwrap())
         } else {
@@ -56,6 +62,8 @@ impl Sprite {
                 sprite_size.clone(),
                 sheet_size.clone(),
             ),
+            frames_per_row,
+            frames_per_column,
             sprite_size,
             sheet_size,
             pixel_scale,
@@ -148,11 +156,13 @@ impl Sprite {
         &mut self,
         frame: usize,
     ) {
-        self.current_frame = frame;
-        self.tex_coords = Self::get_frame_coords(
-            frame,
-            self.sprite_size.clone(),
-            self.sheet_size.clone(),
-        );
+        if frame < self.frames_per_row * self.frames_per_column {
+            self.current_frame = frame;
+            self.tex_coords = Self::get_frame_coords(
+                frame,
+                self.sprite_size.clone(),
+                self.sheet_size.clone(),
+            );
+        }
     }
 }
