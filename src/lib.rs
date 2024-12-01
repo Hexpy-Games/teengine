@@ -1,10 +1,10 @@
-// teengine/src/lib.rs
 pub use gl;
 
 pub mod core;
 pub mod input;
 pub mod sprite;
 pub mod texture;
+pub mod tile;
 
 pub use core::Engine;
 pub use core::Game;
@@ -16,3 +16,7 @@ pub use sprite::animation_sprite::AnimatedSprite;
 pub use sprite::sprite::{Rect, Sprite};
 pub use sprite::sprite_renderer::SpriteRenderer;
 pub use texture::texture::Texture;
+
+pub use tile::properties::*;
+pub use tile::tilemap::*;
+pub use tile::tileset::*;

@@ -8,3 +8,4 @@ teengine = { path = "../../" }
 glutin = "0.29.1"
 gl = "0.14.0"
 glam = "0.22.0"
+rand = "0.8.5"

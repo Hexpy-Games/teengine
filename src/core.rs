@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 // src/core.rs
 use glam::Mat4;
 use glutin::event::{ElementState, Event, KeyboardInput, WindowEvent};
@@ -18,7 +20,7 @@ pub trait Game {
         engine: &mut Engine,
     );
     fn render(
-        &self,
+        &mut self,
         engine: &Engine,
     );
 }
@@ -28,6 +30,8 @@ pub struct Engine {
     pub input_manager: InputManager,
     pub projection: Mat4,
     window_context: glutin::WindowedContext<glutin::PossiblyCurrent>,
+    last_frame_time: Instant,
+    delta_time: f32,
 }
 
 impl Engine {
@@ -90,6 +94,8 @@ impl Engine {
             input_manager: InputManager::new(),
             projection,
             window_context: windowed_context,
+            last_frame_time: Instant::now(),
+            delta_time: 0.0,
         };
 
         println!("Initializing game...");
@@ -98,6 +104,12 @@ impl Engine {
         println!("Starting game loop...");
         event_loop.run(move |event, _, control_flow| {
             *control_flow = ControlFlow::Poll;
+
+            let current_time = Instant::now();
+            engine.delta_time = current_time
+                .duration_since(engine.last_frame_time)
+                .as_secs_f32();
+            engine.last_frame_time = current_time;
 
             match event {
                 Event::WindowEvent { event, .. } => match event {
@@ -155,5 +167,9 @@ impl Engine {
                 _ => (),
             }
         });
+    }
+
+    pub fn delta_time(&self) -> f32 {
+        self.delta_time
     }
 }
