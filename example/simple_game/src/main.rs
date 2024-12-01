@@ -112,25 +112,42 @@ impl SimpleGame {
     }
 
     fn check_collision(
-        &self,
+        tilemap: Option<&TileMap>,
         pos: Vec2,
     ) -> bool {
-        if let Some(tilemap) = &self.tilemap {
-            let (tile_x, tile_y) = tilemap.world_to_tile(pos);
+        if let Some(tilemap) = tilemap {
+            let tile_size = tilemap.tile_size as f32 * tilemap.scale;
+            let character_width = 18.0 * 4.0;
+            let character_height = 18.0 * 4.0;
 
-            // Calculate the tile range to check for collisions
-            let check_width = 1; // adjust according to the character size
-            let check_height = 1;
+            let char_left = pos.x;
+            let char_right = pos.x + character_width;
+            let char_top = pos.y;
+            let char_bottom = pos.y + character_height;
 
-            // check collisions with nearby tiles
-            for y in tile_y.saturating_sub(check_height)..=tile_y + check_height
-            {
-                for x in
-                    tile_x.saturating_sub(check_width)..=tile_x + check_width
-                {
-                    if let Some(tile) = tilemap.get_tile_at("ground", x, y) {
+            let start_x = (char_left / tile_size).floor() as i32;
+            let end_x = (char_right / tile_size).ceil() as i32;
+            let start_y = (char_top / tile_size).floor() as i32;
+            let end_y = (char_bottom / tile_size).ceil() as i32;
+
+            for y in start_y..=end_y {
+                for x in start_x..=end_x {
+                    if let Some(tile) =
+                        tilemap.get_tile_at("ground", x as u32, y as u32)
+                    {
                         if tile.properties.is_collidable() {
-                            return true;
+                            let tile_left = x as f32 * tile_size;
+                            let tile_right = tile_left + tile_size;
+                            let tile_top = y as f32 * tile_size;
+                            let tile_bottom = tile_top + tile_size;
+
+                            if char_left < tile_right
+                                && char_right > tile_left
+                                && char_top < tile_bottom
+                                && char_bottom > tile_top
+                            {
+                                return true;
+                            }
                         }
                     }
                 }
@@ -145,8 +162,6 @@ impl Game for SimpleGame {
         &mut self,
         _engine: &Engine,
     ) {
-        let tileset = Tileset::new(Path::new("assets/tileset.json"));
-
         let texture = Texture::new(Path::new("assets/sprite.png"))
             .expect("Failed to load texture");
 
@@ -184,9 +199,11 @@ impl Game for SimpleGame {
     ) {
         let mut is_moving = false;
         let movement_speed = 2.0;
+        let tilemap = self.tilemap.as_ref();
 
         if let Some(animated_sprite) = &mut self.animated_sprite {
-            let mut new_pos = animated_sprite.sprite().position;
+            let current_pos = animated_sprite.sprite().position.clone();
+            let mut new_pos = animated_sprite.sprite().position.clone();
             let weight = movement_speed;
 
             if engine
@@ -207,6 +224,10 @@ impl Game for SimpleGame {
             if engine.input_manager.is_action_active(InputAction::MoveDown) {
                 new_pos.y += weight;
                 is_moving = true;
+            }
+
+            if Self::check_collision(tilemap, new_pos) {
+                new_pos = current_pos;
             }
 
             animated_sprite.sprite_mut().position = new_pos;
