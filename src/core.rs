@@ -1,19 +1,18 @@
-use std::time::Instant;
-
-// src/core.rs
 use glam::Mat4;
 use glutin::event::{ElementState, Event, KeyboardInput, WindowEvent};
 use glutin::event_loop::{ControlFlow, EventLoop};
 use glutin::window::WindowBuilder;
 use glutin::ContextBuilder;
+use std::time::Instant;
 
 use crate::input::input_manager::InputManager;
 use crate::sprite::sprite_renderer::SpriteRenderer;
+use crate::Camera;
 
 pub trait Game {
     fn init(
         &mut self,
-        engine: &Engine,
+        engine: &mut Engine,
     );
     fn update(
         &mut self,
@@ -21,7 +20,7 @@ pub trait Game {
     );
     fn render(
         &mut self,
-        engine: &Engine,
+        engine: &mut Engine,
     );
 }
 
@@ -29,6 +28,7 @@ pub struct Engine {
     pub sprite_renderer: SpriteRenderer,
     pub input_manager: InputManager,
     pub projection: Mat4,
+    pub camera: Camera,
     window_context: glutin::WindowedContext<glutin::PossiblyCurrent>,
     last_frame_time: Instant,
     delta_time: f32,
@@ -46,9 +46,14 @@ impl Engine {
         let event_loop = EventLoop::new();
 
         println!("Creating window...");
-        let wb = WindowBuilder::new().with_title(title).with_inner_size(
-            glutin::dpi::LogicalSize::new(width as f64, height as f64),
-        );
+        let wb = WindowBuilder::new()
+            .with_title(title)
+            .with_inner_size(glutin::dpi::LogicalSize::new(
+                width as f64,
+                height as f64,
+            ))
+            .with_resizable(false)
+            .with_visible(true);
 
         println!("Creating OpenGL context...");
         let windowed_context = ContextBuilder::new()
@@ -93,13 +98,14 @@ impl Engine {
             sprite_renderer: SpriteRenderer::new(),
             input_manager: InputManager::new(),
             projection,
+            camera: Camera::new(width as f32, height as f32),
             window_context: windowed_context,
             last_frame_time: Instant::now(),
             delta_time: 0.0,
         };
 
         println!("Initializing game...");
-        game.init(&engine);
+        game.init(&mut engine);
 
         println!("Starting game loop...");
         event_loop.run(move |event, _, control_flow| {
@@ -161,7 +167,8 @@ impl Engine {
                         gl::ClearColor(0.0, 0.0, 0.0, 1.0);
                         gl::Clear(gl::COLOR_BUFFER_BIT);
                     }
-                    game.render(&engine);
+                    let projection = engine.camera.get_projection_matrix();
+                    game.render(&mut engine);
                     engine.window_context.swap_buffers().unwrap();
                 }
                 _ => (),

@@ -2,6 +2,7 @@ use glam::Vec2;
 use rand::prelude::*;
 use std::path::Path;
 use std::time::{Duration, Instant};
+use teengine::Camera;
 use teengine::{
     input::input_manager::InputAction,
     tile::{
@@ -114,7 +115,19 @@ impl SimpleGame {
     fn check_collision(
         tilemap: Option<&TileMap>,
         pos: Vec2,
+        world_bounds: Option<(Vec2, Vec2)>,
     ) -> bool {
+        // check world bounderies
+        if let Some(world_bounds) = world_bounds {
+            if pos.x < world_bounds.0.x
+                || pos.x > (world_bounds.1.x - 72.0)
+                || pos.y < world_bounds.0.y
+                || pos.y > (world_bounds.1.y - 72.0)
+            {
+                return true;
+            }
+        }
+
         if let Some(tilemap) = tilemap {
             let tile_size = tilemap.tile_size as f32 * tilemap.scale;
             let character_width = 18.0 * 4.0;
@@ -160,7 +173,7 @@ impl SimpleGame {
 impl Game for SimpleGame {
     fn init(
         &mut self,
-        _engine: &Engine,
+        engine: &mut Engine,
     ) {
         let texture = Texture::new(Path::new("assets/sprite.png"))
             .expect("Failed to load texture");
@@ -191,6 +204,22 @@ impl Game for SimpleGame {
             TileMapRenderer::new(1000)
                 .expect("Failed to create tilemap renderer"),
         );
+
+        let camera = &mut engine.camera;
+
+        camera.set_lerp_speed(1.0);
+
+        if let Some(tilemap) = &self.tilemap {
+            let world_width =
+                tilemap.width as f32 * tilemap.tile_size as f32 * tilemap.scale;
+            let world_height = tilemap.height as f32
+                * tilemap.tile_size as f32
+                * tilemap.scale;
+            camera.set_world_bounds(
+                Vec2::ZERO,
+                Vec2::new(world_width, world_height),
+            );
+        }
     }
 
     fn update(
@@ -226,7 +255,11 @@ impl Game for SimpleGame {
                 is_moving = true;
             }
 
-            if Self::check_collision(tilemap, new_pos) {
+            if Self::check_collision(
+                tilemap,
+                new_pos,
+                engine.camera.get_world_bounds(),
+            ) {
                 new_pos = current_pos;
             }
 
@@ -266,22 +299,32 @@ impl Game for SimpleGame {
         if let Some(tilemap) = &mut self.tilemap {
             tilemap.update(engine.delta_time());
         }
+
+        if let Some(animated_sprite) = &self.animated_sprite {
+            let player_pos = animated_sprite.sprite().position;
+            let player_center_pos = player_pos + Vec2::new(18.0, 18.0);
+            engine
+                .camera
+                .follow_target(player_center_pos, engine.delta_time());
+        }
     }
 
     fn render(
         &mut self,
-        engine: &Engine,
+        engine: &mut Engine,
     ) {
+        let projection = engine.camera.get_projection_matrix();
+
         if let Some(tilemap) = &self.tilemap {
             if let Some(renderer) = &mut self.tilemap_renderer {
-                renderer.render(tilemap, &engine.projection);
+                renderer.render(tilemap, &projection);
             }
         }
 
         if let Some(animated_sprite) = &self.animated_sprite {
             engine
                 .sprite_renderer
-                .draw_sprite(animated_sprite.sprite(), &engine.projection);
+                .draw_sprite(animated_sprite.sprite(), &projection);
         }
     }
 }

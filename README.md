@@ -5,12 +5,15 @@
 Teengine is a 2D/3D game engine developed using the Rust programming language. This project is currently focused on studying game engine development and is not yet ready for production use.
 
 ## Current Features
+
 - Cross-platform window creation and event handling
 - 2D sprite rendering with animation support
 - Basic OpenGL-based rendering system
 - Input handling system (keyboard support)
 - Color key transparency for sprites
 - Simple game state management
+- Camera system with world bounds
+- Support tilemap
 
 ## Planned Features
 

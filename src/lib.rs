@@ -1,5 +1,6 @@
 pub use gl;
 
+pub mod camera;
 pub mod core;
 pub mod input;
 pub mod sprite;
@@ -20,3 +21,5 @@ pub use texture::texture::Texture;
 pub use tile::properties::*;
 pub use tile::tilemap::*;
 pub use tile::tileset::*;
+
+pub use camera::camera::Camera;
