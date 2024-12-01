@@ -13,6 +13,7 @@ Teengine is a 2D/3D game engine developed using the Rust programming language. T
 - Simple game state management
 
 ## Planned Features
+
 - Extended input handling (mouse, gamepad)
 - Physics engine integration (2D/3D)
 - Resource management system
@@ -24,18 +25,22 @@ Teengine is a 2D/3D game engine developed using the Rust programming language. T
 ## Getting Started
 
 ### Requirements
+
 - Rust 1.80 or higher
 - Cargo (Rust package manager)
 - Graphics card and driver supporting OpenGL 3.3 or higher
 
 ### Installation
+
 1. Clone this repository:
+
    ```bash
-   git clone https://github.com/yourusername/teengine.git
+   git clone https://github.com/hexpy-games/teengine.git
    cd teengine
    ```
 
 2. Build the project:
+
    ```bash
    cargo build --release
    ```

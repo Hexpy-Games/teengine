@@ -17,13 +17,13 @@ impl PlayerAnimations {
         Self {
             idle: AnimationSequence::new(
                 "idle".to_string(),
-                vec![0, 1, 2, 3, 4, 3, 2, 1],
+                vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
                 100,
                 true,
             ),
             walking: AnimationSequence::new(
                 "walking".to_string(),
-                vec![5, 6, 0, 7, 8],
+                vec![16, 17, 0, 18, 19],
                 100,
                 true,
             ),
