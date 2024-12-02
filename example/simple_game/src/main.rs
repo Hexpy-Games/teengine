@@ -2,7 +2,7 @@ use glam::Vec2;
 use rand::prelude::*;
 use std::path::Path;
 use std::time::{Duration, Instant};
-use teengine::Camera;
+use teengine::core::EngineConfig;
 use teengine::{
     input::input_manager::InputAction,
     tile::{
@@ -227,31 +227,33 @@ impl Game for SimpleGame {
         engine: &mut Engine,
     ) {
         let mut is_moving = false;
-        let movement_speed = 2.0;
+        let base_movement_speed = 300.0; // move 300 pixels per second
         let tilemap = self.tilemap.as_ref();
 
         if let Some(animated_sprite) = &mut self.animated_sprite {
             let current_pos = animated_sprite.sprite().position.clone();
             let mut new_pos = animated_sprite.sprite().position.clone();
-            let weight = movement_speed;
+
+            // delta time을 곱해서 프레임 레이트와 무관하게 일정한 속도 유지
+            let move_weight = base_movement_speed * engine.delta_time();
 
             if engine
                 .input_manager
                 .is_action_active(InputAction::MoveRight)
             {
-                new_pos.x += weight;
+                new_pos.x += move_weight;
                 is_moving = true;
             }
             if engine.input_manager.is_action_active(InputAction::MoveLeft) {
-                new_pos.x -= weight;
+                new_pos.x -= move_weight;
                 is_moving = true;
             }
             if engine.input_manager.is_action_active(InputAction::MoveUp) {
-                new_pos.y -= weight;
+                new_pos.y -= move_weight;
                 is_moving = true;
             }
             if engine.input_manager.is_action_active(InputAction::MoveDown) {
-                new_pos.y += weight;
+                new_pos.y += move_weight;
                 is_moving = true;
             }
 
@@ -330,6 +332,14 @@ impl Game for SimpleGame {
 }
 
 fn main() {
+    let config = EngineConfig {
+        title: "Simple Game Example".to_string(),
+        width: 800,
+        height: 600,
+        vsync: true,
+        fps_limit: None,
+    };
+
     let game = SimpleGame::new();
-    Engine::new_with_game("Simple Game Example", 800, 600, true, game);
+    Engine::new_with_game(config, game);
 }

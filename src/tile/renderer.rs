@@ -2,6 +2,7 @@ use super::{TileLayer, TileMap};
 use gl::types::*;
 use glam::Mat4;
 
+#[allow(unused)]
 pub struct TileMapRenderer {
     shader_program: GLuint,
     vao: GLuint,
@@ -254,7 +255,7 @@ const TILEMAP_FRAGMENT_SHADER: &str = r#"
     }
 "#;
 
-// 쉐이더 컴파일 헬퍼 함수
+// shader compilation helper function
 fn compile_shader(
     shader_type: GLenum,
     source: &str,
@@ -286,7 +287,7 @@ fn compile_shader(
     }
 }
 
-// 쉐이더 프로그램 링크 헬퍼 함수
+// shader program linking helper function
 fn link_program(
     vertex_shader: GLuint,
     fragment_shader: GLuint,
