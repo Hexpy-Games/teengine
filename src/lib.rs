@@ -4,6 +4,7 @@ pub mod camera;
 pub mod core;
 pub mod input;
 pub mod sprite;
+pub mod text;
 pub mod texture;
 pub mod tile;
 
@@ -23,3 +24,5 @@ pub use tile::tilemap::*;
 pub use tile::tileset::*;
 
 pub use camera::camera::Camera;
+
+pub use text::*;

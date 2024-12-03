@@ -24,6 +24,7 @@ pub trait Game {
     );
 }
 
+#[derive(Clone)]
 pub struct EngineConfig {
     pub title: String,
     pub width: u32,
@@ -49,6 +50,7 @@ pub struct Engine {
     pub input_manager: InputManager,
     pub projection: Mat4,
     pub camera: Camera,
+    config: EngineConfig,
     window_context: WindowedContext<PossiblyCurrent>,
     last_frame_time: Instant,
     delta_time: f32,
@@ -140,6 +142,7 @@ impl Engine {
             target_fps,
             frame_duration: Duration::from_secs_f32(1.0 / target_fps as f32),
             fps_limit: config.fps_limit,
+            config,
         };
 
         #[cfg(debug_assertions)]
@@ -227,5 +230,9 @@ impl Engine {
 
     pub fn get_fps_limit(&self) -> Option<u32> {
         self.fps_limit
+    }
+
+    pub fn get_engine_config(&self) -> EngineConfig {
+        self.config.clone()
     }
 }

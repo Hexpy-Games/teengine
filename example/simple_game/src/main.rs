@@ -11,6 +11,7 @@ use teengine::{
     },
     AnimatedSprite, AnimationSequence, Engine, Game, Rect, Sprite, Texture,
 };
+use teengine::{Padding, TextAlignment, TextRenderer, TextStyle};
 
 struct PlayerAnimations {
     idle: AnimationSequence,
@@ -51,6 +52,7 @@ struct SimpleGame {
     current_animation_state: AnimationState,
     tilemap: Option<TileMap>,
     tilemap_renderer: Option<TileMapRenderer>,
+    text_renderer: Option<TextRenderer>,
 }
 
 impl SimpleGame {
@@ -64,6 +66,7 @@ impl SimpleGame {
             current_animation_state: AnimationState::Idle,
             tilemap: None,
             tilemap_renderer: None,
+            text_renderer: None,
         }
     }
 
@@ -220,6 +223,12 @@ impl Game for SimpleGame {
                 Vec2::new(world_width, world_height),
             );
         }
+
+        self.text_renderer = Some(
+            TextRenderer::builder()
+                .build()
+                .expect("Failed to create text renderer"),
+        );
     }
 
     fn update(
@@ -327,6 +336,34 @@ impl Game for SimpleGame {
             engine
                 .sprite_renderer
                 .draw_sprite(animated_sprite.sprite(), &projection);
+
+            if let Some(text_renderer) = &mut self.text_renderer {
+                let pos = animated_sprite.sprite().position;
+                let text = format!("Coord X: {:.1}, Y: {:.1}", pos.x, pos.y);
+
+                let style = TextStyle {
+                    font_size: 26.0,
+                    color: [1.0, 1.0, 1.0, 1.0],
+                    alignment: TextAlignment::Left,
+                    background_color: Some([0.0, 0.0, 0.0, 0.7]),
+                    padding: Padding {
+                        left: 5.0,
+                        right: 5.0,
+                        top: 3.0,
+                        bottom: 3.0,
+                    },
+                    ..Default::default()
+                };
+
+                // UI 좌표는 카메라와 독립적이어야 하므로 engine.projection 사용
+                text_renderer.draw_text(
+                    &text,
+                    0.0,  // 우측 여백 10px
+                    72.0, // 상단 여백 10px
+                    &style,
+                    &engine.projection,
+                );
+            }
         }
     }
 }
