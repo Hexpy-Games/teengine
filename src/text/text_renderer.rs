@@ -10,23 +10,6 @@ use super::{TextAlignment, TextStyle, VerticalAlignment};
 static DEFAULT_FONT_DATA: &[u8] =
     include_bytes!("../assets/fonts/Pretendard-Medium.ttf");
 
-// 동적 텍스처 아틀라스 관리를 위한 구조체
-#[derive(Debug)]
-struct AtlasRegion {
-    x: u32,
-    y: u32,
-    width: u32,
-    height: u32,
-}
-
-#[derive(Clone, Debug)]
-pub struct GlyphInfo {
-    pub tex_coords: [f32; 4], // UV 좌표
-    pub size: [f32; 2],       // 픽셀 크기
-    pub offset: [f32; 2],     // 베이스라인으로부터의 오프셋
-    pub advance: f32,         // 다음 글리프까지의 거리
-}
-
 #[derive(Debug, Clone)]
 pub struct TextBounds {
     pub width: f32,
@@ -935,11 +918,11 @@ const TEXT_VERTEX_SHADER: &str = r#"
     #version 330 core
     layout (location = 0) in vec2 aPos;
     layout (location = 1) in vec2 aTexCoords;
-    
+
     out vec2 TexCoords;
-    
+
     uniform mat4 projection;
-    
+
     void main()
     {
         gl_Position = projection * vec4(aPos, 0.0, 1.0);
@@ -951,10 +934,10 @@ const TEXT_FRAGMENT_SHADER: &str = r#"
     #version 330 core
     in vec2 TexCoords;
     out vec4 FragColor;
-    
+
     uniform sampler2D text;
     uniform vec4 textColor;
-    
+
     void main()
     {
         vec4 sampled = vec4(1.0, 1.0, 1.0, texture(text, TexCoords).r);
