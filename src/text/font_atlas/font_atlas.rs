@@ -1,9 +1,12 @@
 use image::{Rgba, RgbaImage};
 use rusttype::{point, Font, PositionedGlyph, Scale};
-use std::collections::HashMap;
+use serde::{Deserialize, Serialize};
+use std::{collections::HashMap, path::Path};
+
+use super::{FontAtlasFile, FontError};
 
 // Define the character information in the font atlas
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Serialize, Deserialize, Debug)]
 pub struct CharInfo {
     pub x: f32,        // X position in atlas
     pub y: f32,        // Y position in atlas
@@ -14,18 +17,20 @@ pub struct CharInfo {
     pub xadvance: f32, // How far to move cursor for next character
 }
 
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Clone, Serialize, Deserialize, Debug)]
 pub enum FontType {
     Ascii,
     Unicode,
 }
 
 impl FontType {
-    pub fn from_str(s: &str) -> Self {
+    pub fn from_str(s: &str) -> Result<Self, FontError> {
         match s.to_uppercase().as_str() {
-            "ASCII" => FontType::Ascii,
-            "UNICODE" => FontType::Unicode,
-            _ => FontType::Unicode, // default to Unicode
+            "ASCII" => Ok(FontType::Ascii),
+            "UNICODE" => Ok(FontType::Unicode),
+            invalid_type => {
+                Err(FontError::InvalidFontType(invalid_type.to_string()))
+            }
         }
     }
 
@@ -37,13 +42,16 @@ impl FontType {
     }
 }
 
+#[derive(Debug)]
 pub struct FontAtlas {
     pub image: RgbaImage,
     pub chars: HashMap<char, CharInfo>,
+    pub font_size: f32,
     pub padding: u32,
     pub width: u32,
     pub height: u32,
     pub line_height: f32,
+    pub font_type: FontType,
 }
 
 const DEFAULT_PADDING: u32 = 5;
@@ -51,61 +59,55 @@ const DEFAULT_FONT_SIZE: f32 = 16.0;
 const DEFAULT_FONT_TYPE: FontType = FontType::Unicode;
 
 impl FontAtlas {
+    pub const CURRENT_VERSION: u32 = 1;
+
     pub fn new(
         font_data: &[u8],
         font_size: Option<f32>,
         font_type: Option<String>,
         padding: Option<u32>,
-    ) -> Self {
-        let font_type = font_type.map(|s| FontType::from_str(&s));
+    ) -> Result<Self, FontError> {
+        let font_type = if let Some(ft_str) = font_type {
+            FontType::from_str(&ft_str)?
+        } else {
+            DEFAULT_FONT_TYPE
+        };
 
         let baked_font_atlas =
             Self::bake_font_atlas(font_data, font_size, font_type, padding)
-                .expect("Failed to bake font atlas");
+                .map_err(|e| FontError::FontLoadError(e.to_string()))?;
 
-        Self {
+        Ok(Self {
             image: baked_font_atlas.image,
             chars: baked_font_atlas.chars,
             padding: baked_font_atlas.padding,
             width: baked_font_atlas.width,
             height: baked_font_atlas.height,
             line_height: baked_font_atlas.line_height,
-        }
-    }
-
-    pub fn use_default_atlas() -> FontAtlas {
-        // Load default font file from engine asset.
-        let baked_font_atlas = Self::bake_font_atlas(
-            include_bytes!("../assets/fonts/Pretendard-Medium.ttf"),
-            Some(DEFAULT_FONT_SIZE),
-            Some(DEFAULT_FONT_TYPE.as_str().to_string()),
-            Some(DEFAULT_PADDING),
-        )
-        .expect("Failed to bake font atlas");
-
-        baked_font_atlas
+            font_type: baked_font_atlas.font_type,
+            font_size: baked_font_atlas.font_size,
+        })
     }
 
     // Utility function to bake font into an atlas
     pub fn bake_font_atlas(
         font_data: &[u8],
         font_size: Option<f32>,
-        font_type: Option<String>,
+        font_type: FontType,
         padding: Option<u32>,
     ) -> Result<FontAtlas, Box<dyn std::error::Error + '_>> {
         // Load font from font_data
-        let font =
-            Font::try_from_bytes(font_data).ok_or("Failed to load font")?;
+        let font = Font::try_from_bytes(font_data).ok_or_else(|| {
+            FontError::FontLoadError("Failed to load font".to_string())
+        })?;
 
-        let font_size = font_size.unwrap_or(16.0);
+        let font_size = font_size.unwrap_or(DEFAULT_FONT_SIZE);
         let scale = Scale::uniform(font_size);
         let v_metrics = font.v_metrics(scale);
         let line_height =
             v_metrics.ascent - v_metrics.descent + v_metrics.line_gap;
 
         let chars: Vec<char>;
-
-        let font_type = font_type.unwrap_or(FontType::Unicode);
 
         if font_type == FontType::Unicode {
             chars = (0..=0xFFFF) // Basic Multilingual Plane (BMP)
@@ -191,6 +193,8 @@ impl FontAtlas {
             width: atlas_width,
             height: atlas_height,
             line_height,
+            font_type,
+            font_size,
         })
     }
 
@@ -208,5 +212,24 @@ impl FontAtlas {
                 atlas.put_pixel(px, py, rgba);
             });
         }
+    }
+
+    pub fn save_to_file(
+        &self,
+        path: impl AsRef<Path>,
+    ) -> Result<(), FontError> {
+        FontAtlasFile::save_to_file(self, path)
+    }
+
+    pub fn load_from_file(
+        path: impl AsRef<Path>
+    ) -> Result<FontAtlas, FontError> {
+        FontAtlasFile::load_from_file(path)
+    }
+
+    pub fn default() -> Result<Self, FontError> {
+        static DEFAULT_FONT_ATLAS: &[u8] =
+            include_bytes!("../../assets/fonts/pretendard.fad");
+        FontAtlasFile::load_from_bytes(DEFAULT_FONT_ATLAS)
     }
 }

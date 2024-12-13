@@ -222,15 +222,10 @@ impl Game for SimpleGame {
             );
         }
 
-        let font_data: &[u8] =
-            include_bytes!("../assets/fonts/Pretendard-Medium.ttf");
+        let text_atlas =
+            FontAtlas::default().expect("Failed to create font atlas");
 
-        let text_atlas = FontAtlas::new(font_data, None, None, None);
-
-        text_atlas
-            .image
-            .save("font_atlas.png")
-            .expect("Failed to save font atlas");
+        println!("{:?}", text_atlas);
     }
 
     fn update(
