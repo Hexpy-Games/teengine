@@ -144,6 +144,8 @@ impl FontAtlas {
             chars = (32..127).map(|c| c as u8 as char).collect(); // ASCII printable characters
         }
 
+        const ATLAS_WIDTH: f32 = 1024.0;
+
         // First pass: calculate total width and height needed
         let mut total_width: u32 = 0;
         let mut max_height: u32 = 0;
@@ -160,8 +162,7 @@ impl FontAtlas {
         }
 
         // Calculate rows and columns for a more square-like atlas
-        let approx_sqrt = (total_width as f32).sqrt().ceil() as u32;
-        let atlas_width = approx_sqrt.next_power_of_two();
+        let atlas_width = ATLAS_WIDTH as u32;
         let num_rows =
             ((total_width as f32) / (atlas_width as f32)).ceil() as u32;
         let atlas_height = (max_height * num_rows).next_power_of_two();
@@ -260,7 +261,7 @@ impl FontAtlas {
 
     pub fn default() -> Result<Self, FontError> {
         static DEFAULT_FONT_ATLAS: &[u8] =
-            include_bytes!("../../assets/fonts/pretendard.fad");
+            include_bytes!("../../assets/fonts/pretendard_ascii.fad");
         FontAtlasFile::load_from_bytes(DEFAULT_FONT_ATLAS)
     }
 }

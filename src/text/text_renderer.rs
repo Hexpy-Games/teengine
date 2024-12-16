@@ -118,7 +118,6 @@ impl TextRendererBuilder {
                 println!("GL Error after buffer setup: {}", error);
             }
 
-            // 초기 상태 정리
             gl::BindBuffer(gl::ARRAY_BUFFER, 0);
             gl::BindVertexArray(0);
 
@@ -153,39 +152,27 @@ impl TextRenderer {
         y: f32,
         scale: f32,
     ) {
-        // yoffset이 음수이므로, y에서 빼면 위로 올라감
         let x_pos = x + (char_info.xoffset * scale);
-        let y_pos = y - (char_info.yoffset * scale); // 부호 변경
+        let y_pos = y - (char_info.yoffset * scale);
 
         let w = char_info.width * scale * self.font_atlas.width as f32;
         let h = char_info.height * scale * self.font_atlas.height as f32;
 
+        let c_x = char_info.x;
+        let c_y = char_info.y;
+
+        let c_w = char_info.width;
+        let c_h = char_info.height;
+
+        #[rustfmt::skip]
         let vertices: [f32; 24] = [
-            // pos          // tex coords
-            x_pos,
-            y_pos,
-            char_info.x,
-            char_info.y, // 좌하단
-            x_pos,
-            y_pos + h,
-            char_info.x,
-            char_info.y + char_info.height, // 좌상단
-            x_pos + w,
-            y_pos + h,
-            char_info.x + char_info.width,
-            char_info.y + char_info.height, // 우상단
-            x_pos + w,
-            y_pos + h,
-            char_info.x + char_info.width,
-            char_info.y + char_info.height, // 우상단
-            x_pos + w,
-            y_pos,
-            char_info.x + char_info.width,
-            char_info.y, // 우하단
-            x_pos,
-            y_pos,
-            char_info.x,
-            char_info.y, // 좌하단
+        //  pos                   tex coords
+            x_pos,     y_pos,     c_x,       c_y,       // Left bottom
+            x_pos,     y_pos + h, c_x,       c_y + c_h, // Left top
+            x_pos + w, y_pos + h, c_x + c_w, c_y + c_h, // Right top
+            x_pos + w, y_pos + h, c_x + c_w, c_y + c_h, // Right top
+            x_pos + w, y_pos,     c_x + c_w, c_y,       // Right bottom
+            x_pos,     y_pos,     c_x,       c_y,       // Left bottom
         ];
 
         unsafe {
@@ -213,11 +200,9 @@ impl TextRenderer {
             gl::UseProgram(self.shader_program);
             gl::BindVertexArray(self.vao);
 
-            // Texture binding
             gl::ActiveTexture(gl::TEXTURE0);
             gl::BindTexture(gl::TEXTURE_2D, self.texture.id());
 
-            // 셰이더 유니폼 설정
             gl::UniformMatrix4fv(
                 gl::GetUniformLocation(
                     self.shader_program,
@@ -243,18 +228,8 @@ impl TextRenderer {
                 0,
             );
 
-            // gl::Uniform1f(
-            //     gl::GetUniformLocation(
-            //         self.shader_program,
-            //         b"smoothing\0".as_ptr() as *const _,
-            //     ),
-            //     0.3,
-            // );
-
-            // VAO 바인딩
             gl::BindVertexArray(self.vao);
 
-            // 각 글자 렌더링
             for c in text.nfc() {
                 if let Some(char_info) = self.font_atlas.chars.get(&c) {
                     self.render_glyph(char_info, x, y, scale);
@@ -262,7 +237,6 @@ impl TextRenderer {
                 }
             }
 
-            // 상태 정리
             gl::BindVertexArray(0);
             gl::BindTexture(gl::TEXTURE_2D, 0);
             gl::UseProgram(0);
@@ -273,13 +247,13 @@ impl TextRenderer {
 impl Drop for TextRenderer {
     fn drop(&mut self) {
         unsafe {
-            // 먼저 바인딩된 상태 해제
+            // Unbind everything
             gl::BindTexture(gl::TEXTURE_2D, 0);
             gl::BindBuffer(gl::ARRAY_BUFFER, 0);
             gl::BindVertexArray(0);
             gl::UseProgram(0);
 
-            // 리소스 정리
+            // Clean up resources
             self.texture.delete();
             gl::DeleteBuffers(1, &self.vbo);
             gl::DeleteVertexArrays(1, &self.vao);

@@ -224,22 +224,8 @@ impl Game for SimpleGame {
             );
         }
 
-        let new_atlas = FontAtlas::new(
-            include_bytes!("../assets/Pretendard-Medium.ttf"),
-            Some(16.0),
-            None,
-            None,
-        )
-        .expect("Failed to create font atlas");
-        new_atlas.save_to_file("assets/pretendard.fad").unwrap();
-
-        // let new_atlas =
-        //     FontAtlas::default().expect("Failed to create font atlas");
-
-        new_atlas
-            .image
-            .save("test.png")
-            .expect("Failed to save image");
+        let new_atlas =
+            FontAtlas::default().expect("Failed to create font atlas");
 
         self.text_renderer = Some(
             TextRenderer::builder()
@@ -358,28 +344,12 @@ impl Game for SimpleGame {
             if let Some(text_renderer) = &mut self.text_renderer {
                 let pos = animated_sprite.sprite().position;
                 let text = format!("Coord X: {:.1}, Y: {:.1}", pos.x, pos.y);
-                // let text = format!("Hello world!");
 
-                //     let style = TextStyle {
-                //         font_size: 26.0,
-                //         color: [1.0, 1.0, 1.0, 1.0],
-                //         alignment: TextAlignment::Left,
-                //         background_color: Some([0.0, 0.0, 0.0, 0.7]),
-                //         padding: Padding {
-                //             left: 5.0,
-                //             right: 5.0,
-                //             top: 3.0,
-                //             bottom: 3.0,
-                //         },
-                //         ..Default::default()
-                //     };
-
-                // UI 좌표는 카메라와 독립적이어야 하므로 engine.projection 사용
                 text_renderer.render_text(
                     &text,
                     40.0,
                     40.0,
-                    2.0,
+                    1.0,
                     [1.0, 1.0, 1.0, 1.0],
                     &engine.projection,
                 );
