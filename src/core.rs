@@ -24,6 +24,7 @@ pub trait Game {
     );
 }
 
+#[derive(Clone)]
 pub struct EngineConfig {
     pub title: String,
     pub width: u32,
@@ -49,6 +50,7 @@ pub struct Engine {
     pub input_manager: InputManager,
     pub projection: Mat4,
     pub camera: Camera,
+    config: EngineConfig,
     window_context: WindowedContext<PossiblyCurrent>,
     last_frame_time: Instant,
     delta_time: f32,
@@ -98,8 +100,8 @@ impl Engine {
         println!("Loading OpenGL functions...");
         gl::load_with(|symbol| {
             let proc_addr = windowed_context.get_proc_address(symbol);
-            #[cfg(debug_assertions)]
-            println!("Loading GL symbol: {} -> {:?}", symbol, proc_addr);
+            // #[cfg(debug_assertions)]
+            // println!("Loading GL symbol: {} -> {:?}", symbol, proc_addr);
             proc_addr as *const _
         });
 
@@ -140,6 +142,7 @@ impl Engine {
             target_fps,
             frame_duration: Duration::from_secs_f32(1.0 / target_fps as f32),
             fps_limit: config.fps_limit,
+            config,
         };
 
         #[cfg(debug_assertions)]
@@ -171,8 +174,8 @@ impl Engine {
                         }
                         engine.projection = Mat4::orthographic_rh(
                             0.0,
-                            physical_size.width as f32,
-                            physical_size.height as f32,
+                            engine.config.width as f32,
+                            engine.config.height as f32,
                             0.0,
                             -1.0,
                             1.0,
@@ -227,5 +230,9 @@ impl Engine {
 
     pub fn get_fps_limit(&self) -> Option<u32> {
         self.fps_limit
+    }
+
+    pub fn get_engine_config(&self) -> EngineConfig {
+        self.config.clone()
     }
 }

@@ -11,6 +11,7 @@ use teengine::{
     },
     AnimatedSprite, AnimationSequence, Engine, Game, Rect, Sprite, Texture,
 };
+use teengine::{FontAtlas, TextRenderer};
 
 struct PlayerAnimations {
     idle: AnimationSequence,
@@ -51,6 +52,7 @@ struct SimpleGame {
     current_animation_state: AnimationState,
     tilemap: Option<TileMap>,
     tilemap_renderer: Option<TileMapRenderer>,
+    text_renderer: Option<TextRenderer>,
 }
 
 impl SimpleGame {
@@ -64,6 +66,7 @@ impl SimpleGame {
             current_animation_state: AnimationState::Idle,
             tilemap: None,
             tilemap_renderer: None,
+            text_renderer: None,
         }
     }
 
@@ -220,6 +223,16 @@ impl Game for SimpleGame {
                 Vec2::new(world_width, world_height),
             );
         }
+
+        let new_atlas =
+            FontAtlas::default().expect("Failed to create font atlas");
+
+        self.text_renderer = Some(
+            TextRenderer::builder()
+                .with_font_atlas(new_atlas)
+                .build()
+                .expect("Failed to create text renderer"),
+        );
     }
 
     fn update(
@@ -327,6 +340,20 @@ impl Game for SimpleGame {
             engine
                 .sprite_renderer
                 .draw_sprite(animated_sprite.sprite(), &projection);
+
+            if let Some(text_renderer) = &mut self.text_renderer {
+                let pos = animated_sprite.sprite().position;
+                let text = format!("Coord X: {:.1}, Y: {:.1}", pos.x, pos.y);
+
+                text_renderer.render_text(
+                    &text,
+                    40.0,
+                    40.0,
+                    1.0,
+                    [1.0, 1.0, 1.0, 1.0],
+                    &engine.projection,
+                );
+            }
         }
     }
 }

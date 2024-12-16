@@ -15,6 +15,14 @@ impl Texture {
         let (width, height) = img.dimensions();
         let data = img.into_rgba8().into_raw();
 
+        Texture::new_from_data(&data, width, height)
+    }
+
+    pub fn new_from_data(
+        data: &[u8],
+        width: u32,
+        height: u32,
+    ) -> Result<Texture, String> {
         let mut id = 0;
         unsafe {
             gl::GenTextures(1, &mut id);
@@ -51,6 +59,15 @@ impl Texture {
                 gl::TEXTURE_MAG_FILTER,
                 gl::NEAREST as i32,
             );
+
+            // Debug: Check for GL errors
+            let error = gl::GetError();
+            if error != gl::NO_ERROR {
+                println!("GL Error after texture creation: {}", error);
+                Err(format!("GL Error: {}", error))?;
+            }
+
+            println!("generated texture id: {}", id);
         }
 
         Ok(Self { id, width, height })
@@ -59,6 +76,16 @@ impl Texture {
     pub fn bind(&self) {
         unsafe {
             gl::BindTexture(gl::TEXTURE_2D, self.id);
+        }
+    }
+
+    pub fn id(&self) -> GLuint {
+        self.id
+    }
+
+    pub fn delete(&self) {
+        unsafe {
+            gl::DeleteTextures(1, &self.id);
         }
     }
 
