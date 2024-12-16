@@ -1,5 +1,6 @@
-use crate::sprite::sprite::Sprite;
+use crate::shader::link_program;
 use crate::sprite::sprite_shaders;
+use crate::{shader::compile_shader, sprite::sprite::Sprite};
 use gl::types::*;
 use glam::{Mat4, Vec3};
 
@@ -11,16 +12,18 @@ pub struct SpriteRenderer {
 
 impl SpriteRenderer {
     pub fn new() -> Self {
-        let vertex_shader = sprite_shaders::compile_shader(
+        let vertex_shader = compile_shader(
             gl::VERTEX_SHADER,
             sprite_shaders::SPRITE_VERTEX_SHADER,
-        );
-        let fragment_shader = sprite_shaders::compile_shader(
+        )
+        .expect("Failed to compile vertex shader");
+        let fragment_shader = compile_shader(
             gl::FRAGMENT_SHADER,
             sprite_shaders::SPRITE_FRAGMENT_SHADER,
-        );
-        let program =
-            sprite_shaders::link_program(vertex_shader, fragment_shader);
+        )
+        .expect("Failed to compile fragment shader");
+        let program = link_program(vertex_shader, fragment_shader)
+            .expect("Failed to link program");
 
         let mut vao = 0;
         let mut vbo = 0;

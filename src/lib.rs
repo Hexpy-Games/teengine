@@ -3,6 +3,7 @@ pub use gl;
 pub mod camera;
 pub mod core;
 pub mod input;
+pub mod shader;
 pub mod sprite;
 pub mod text;
 pub mod texture;

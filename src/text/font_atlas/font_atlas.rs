@@ -17,6 +17,29 @@ pub struct CharInfo {
     pub xadvance: f32, // How far to move cursor for next character
 }
 
+impl CharInfo {
+    pub fn new(
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+        xoffset: f32,
+        yoffset: f32,
+        xadvance: f32,
+    ) -> Self {
+        // Normalize values to be in the range [0, 1]
+        Self {
+            x,
+            y,
+            width,
+            height,
+            xoffset,
+            yoffset,
+            xadvance,
+        }
+    }
+}
+
 #[derive(PartialEq, Clone, Serialize, Deserialize, Debug)]
 pub enum FontType {
     Ascii,
@@ -54,7 +77,7 @@ pub struct FontAtlas {
     pub font_type: FontType,
 }
 
-const DEFAULT_PADDING: u32 = 5;
+const DEFAULT_PADDING: u32 = 10;
 const DEFAULT_FONT_SIZE: f32 = 16.0;
 const DEFAULT_FONT_TYPE: FontType = FontType::Unicode;
 
@@ -174,7 +197,7 @@ impl FontAtlas {
                         width: bbox.width() as f32 / atlas_width as f32,
                         height: bbox.height() as f32 / atlas_height as f32,
                         xoffset: bbox.min.x as f32,
-                        yoffset: bbox.min.y as f32,
+                        yoffset: -bbox.min.y as f32,
                         xadvance: glyph
                             .unpositioned()
                             .h_metrics()
@@ -204,11 +227,19 @@ impl FontAtlas {
         x: u32,
         y: u32,
     ) {
-        if let Some(_) = glyph.pixel_bounding_box() {
+        if let Some(bb) = glyph.pixel_bounding_box() {
+            for px in x..(x + bb.width() as u32) {
+                for py in y..(y + bb.height() as u32) {
+                    atlas.put_pixel(px, py, Rgba([255, 255, 255, 0]));
+                }
+            }
+
             glyph.draw(|gx, gy, intensity| {
                 let px = x + gx as u32;
                 let py = y + gy as u32;
-                let rgba = Rgba([255, 255, 255, (intensity * 255.0) as u8]);
+
+                let alpha = (intensity * 255.0) as u8;
+                let rgba = Rgba([255, 255, 255, alpha]);
                 atlas.put_pixel(px, py, rgba);
             });
         }

@@ -100,8 +100,8 @@ impl Engine {
         println!("Loading OpenGL functions...");
         gl::load_with(|symbol| {
             let proc_addr = windowed_context.get_proc_address(symbol);
-            #[cfg(debug_assertions)]
-            println!("Loading GL symbol: {} -> {:?}", symbol, proc_addr);
+            // #[cfg(debug_assertions)]
+            // println!("Loading GL symbol: {} -> {:?}", symbol, proc_addr);
             proc_addr as *const _
         });
 
@@ -174,8 +174,8 @@ impl Engine {
                         }
                         engine.projection = Mat4::orthographic_rh(
                             0.0,
-                            physical_size.width as f32,
-                            physical_size.height as f32,
+                            engine.config.width as f32,
+                            engine.config.height as f32,
                             0.0,
                             -1.0,
                             1.0,
